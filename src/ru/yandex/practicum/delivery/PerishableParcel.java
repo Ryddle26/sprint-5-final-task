@@ -10,7 +10,7 @@ public class PerishableParcel extends Parcel {
     }
 
     public boolean isExpired(int currentDay) {
-        if ((this.sendDay + timeToLive) >= currentDay) {
+        if ((this.sendDay + timeToLive) > currentDay) {
             return false;
         }
         return true;
