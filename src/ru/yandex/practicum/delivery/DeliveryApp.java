@@ -8,10 +8,10 @@ public class DeliveryApp {
 
     private static final Scanner scanner = new Scanner(System.in);
     private static List<Parcel> allParcels = new ArrayList<>();
-    private static List<FragileParcel> trackingParcels = new ArrayList<>();
-    private static ParcelBox<StandardParcel> standardBox = null;
-    private static ParcelBox<PerishableParcel> perishableBox = null;
-    private static ParcelBox<FragileParcel> fragileBox = null;
+    private static List<Trackable> trackingParcels = new ArrayList<>();
+    private static ParcelBox<StandardParcel> standardBox = new ParcelBox<>(100);
+    private static ParcelBox<PerishableParcel> perishableBox = new ParcelBox<>(100);
+    private static ParcelBox<FragileParcel> fragileBox = new ParcelBox<>(100);
 
     public static void main(String[] args) {
         boolean running = true;
@@ -25,12 +25,6 @@ public class DeliveryApp {
                     break;
                 case 2:
                     sendParcels();
-                    for (Parcel parcel : allParcels) {
-                        if (parcel instanceof FragileParcel) {
-                            FragileParcel fragileParcel = (FragileParcel) parcel;
-                            trackingParcels.add(fragileParcel);
-                        }
-                    }
                     break;
                 case 3:
                     calculateCosts();
@@ -39,7 +33,7 @@ public class DeliveryApp {
                     if (!trackingParcels.isEmpty()) {
                         System.out.println("Укажите где находится посылка на данный момент");
                         String newLocation = scanner.nextLine();
-                        for (FragileParcel parcel : trackingParcels) {
+                        for (Trackable parcel : trackingParcels) {
                             parcel.reportStatus(newLocation);
                         }
                     } else {
@@ -87,7 +81,7 @@ public class DeliveryApp {
         String parcelDescription = scanner.nextLine();
 
         System.out.println("Укажите вес посылки");
-        double parcelWeight = scanner.nextDouble();
+        int parcelWeight = scanner.nextInt();
         scanner.nextLine();
 
         System.out.println("Укажите адрес доставки");
@@ -108,6 +102,7 @@ public class DeliveryApp {
                 FragileParcel fragileParcel = new FragileParcel(parcelDescription, parcelWeight,
                         parcelAddress, sendDay);
                 allParcels.add(fragileParcel);
+                trackingParcels.add(fragileParcel);
                 fragileBox = addToBox(fragileBox, fragileParcel);
                 break;
             case (3):
@@ -119,7 +114,7 @@ public class DeliveryApp {
                 scanner.nextLine();
                 PerishableParcel perishableParcel = new PerishableParcel(parcelDescription, parcelWeight,
                         parcelAddress, sendDay, timeToLive);
-                if (perishableParcel.isExpired(currentDay)) {
+                if (!perishableParcel.isExpired(currentDay)) {
                     allParcels.add(perishableParcel);
                     perishableBox = addToBox(perishableBox, perishableParcel);
                 } else {
@@ -134,9 +129,13 @@ public class DeliveryApp {
 
     private static void sendParcels() {
         // Пройти по allParcels, вызвать packageItem() и deliver()
-        for (Parcel parcel : allParcels) {
+        if (!allParcels.isEmpty()) {
+            for (Parcel parcel : allParcels) {
                 parcel.packageItem();
                 parcel.deliver();
+            }
+        } else {
+            System.out.println("Нет посылок для отправки");
         }
     }
 
@@ -156,7 +155,7 @@ public class DeliveryApp {
             scanner.nextLine();
             box = new ParcelBox<>(maxWeight);
         }
-        box.addParcel(parcel, parcel.weight);
+        box.addParcel(parcel);
         return box;
     }
 
